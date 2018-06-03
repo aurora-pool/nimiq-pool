@@ -1,0 +1,50 @@
+{
+   "poolService": {
+      "enabled": true,
+      "mySqlPsw": "$MYSQL_PASSWORD",
+      "mySqlHost": "$MYSQL_HOST",
+      "mySqlPort": "$MYSQL_PORT"
+   },
+   "poolMetricsServer": {
+      "enabled": true,
+      "port": 8650,
+      "password": null
+   },
+   "poolServer": {
+      "enabled": true,
+      "port": 8444,
+      "sslCertPath": "$SSL_CERT_PATH",
+      "sslKeyPath": "$SSL_KEY_PATH",
+      "mySqlPsw": "$MYSQL_PASSWORD",
+      "mySqlHost": "$MYSQL_HOST",
+      "mySqlPort": "$MYSQL_PORT"
+   },
+   "wallet": {
+      "seed": "$MAIN_WALLET_SEED"
+   },
+   "pool": {
+      "name": "Aurora Pool",
+      "address": "$MAIN_WALLET_ADDRESS",
+      "payoutConfirmations": 10,
+      "autoPayOutLimit": 5000000,
+      "poolFee": 0.01,
+      "networkFee": 1,
+      "desiredSps": 0.2,
+      "spsTimeUnit": 60000,
+      "minDifficulty": 1,
+      "connectionTimeout": 600000,
+      "pplnsShares": 1000,
+      "allowedErrors": 3
+   },
+   "host": "aurorapool.io",
+   "port": 8443,
+   "tls": {
+      "cert": "$SSL_CERT_PATH",
+      "key": "$SSL_KEY_PATH"
+   },
+   "type": "full",
+   "network": "main",
+   "log": {
+      "level": "verbose"
+   }
+}

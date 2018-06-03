@@ -1,0 +1,47 @@
+version: '3'
+services:
+  pool_server:
+    image: vaolivei/nimiq-pool
+    command: /bin/bash ./deployment/init.sh
+    ports:
+    - "8444:8444" # Pool Server
+    - "8443:8443" # Node WebSocket
+    - "8650:8650" # Metrics
+    volumes:
+    - /etc/letsencrypt/archive/aurorapool.io/:/etc/letsencrypt/archive/aurorapool.io
+    - /home/ubuntu/pool/test-full-consensus/:/app/test-full-consensus
+    - /home/ubuntu/pool/main-full-consensus/:/app/main-full-consensus
+    - /home/ubuntu/pool/wallet/:/app/wallet
+    - /home/ubuntu/pool/peer-key/:/app/peer-key
+    environment:
+      - MYSQL_PASSWORD
+      - MYSQL_HOST
+      - MYSQL_PORT
+      - SSL_CERT_PATH
+      - SSL_KEY_PATH
+      - TEST_WALLET_ADDRESS
+      - TEST_WALLET_SEED
+      - MAIN_WALLET_ADDRESS
+      - MAIN_WALLET_SEED
+      - NODE_ENV
+
+  pool_payout:
+    image: vaolivei/nimiq-pool
+    command: /bin/bash ./deployment/init-payout.sh
+    volumes:
+    - /etc/letsencrypt/archive/aurorapool.io/:/etc/letsencrypt/archive/aurorapool.io
+    - /home/ubuntu/pool/test-full-consensus/:/app/test-full-consensus
+    - /home/ubuntu/pool/main-full-consensus/:/app/main-full-consensus
+    - /home/ubuntu/pool/wallet/:/app/wallet
+    - /home/ubuntu/pool/peer-key/:/app/peer-key
+    environment:
+      - MYSQL_PASSWORD
+      - MYSQL_HOST
+      - MYSQL_PORT
+      - SSL_CERT_PATH
+      - SSL_KEY_PATH
+      - TEST_WALLET_ADDRESS
+      - TEST_WALLET_SEED
+      - MAIN_WALLET_ADDRESS
+      - MAIN_WALLET_SEED
+      - NODE_ENV

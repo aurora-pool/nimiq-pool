@@ -269,7 +269,7 @@ class PoolServer extends Nimiq.Observable {
         }
         this._averageHashrate = hashrateSum / this._hashrates.length;
 
-        Nimiq.Log.d(PoolServer, `Pool hashrate is ${Math.round(this._averageHashrate)} H/s (10 min average)`);
+        Nimiq.Log.d(PoolServer, `Pool hashrate is ${Math.round(this._averageHashrate)} H/s (1 min average)`);
     }
 
     /**

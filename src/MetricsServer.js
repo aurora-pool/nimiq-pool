@@ -54,7 +54,7 @@ class MetricsServer {
     }
 
     _metrics(res) {
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'unregistered'}), clientCounts.unregistered);
+        const clientCounts = this._poolServer.getClientModeCounts();
         MetricsServer._metric(res, 'pool_clients', this._with({client: 'unregistered'}), clientCounts.unregistered);
         MetricsServer._metric(res, 'pool_clients', this._with({client: 'smart'}), clientCounts.smart);
         MetricsServer._metric(res, 'pool_clients', this._with({client: 'nano'}), clientCounts.nano);

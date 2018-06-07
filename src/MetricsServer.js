@@ -62,6 +62,7 @@ class MetricsServer {
         MetricsServer._metric(res, 'pool_ips_banned', this._desc, this._poolServer.numIpsBanned);
         MetricsServer._metric(res, 'pool_blocks_mined', this._desc, this._poolServer.numBlocksMined);
         MetricsServer._metric(res, 'pool_total_share_difficulty', this._desc, this._poolServer.totalShareDifficulty);
+        MetricsServer._metric(res, 'pool_hash_rate', this._desc, this._poolServer.averageHashrate);
     }
 
     /**

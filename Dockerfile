@@ -11,4 +11,4 @@ RUN npm install -g yarn && \
 RUN chmod +rwx /app/deployment/init.sh
 RUN chmod +rwx /app/deployment/init-payout.sh
 
-EXPOSE 8650 8444 8443 3306 8650
+EXPOSE 8650 8444 8443 8000

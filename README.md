@@ -31,3 +31,33 @@ Run `node index.js --config=[CONFIG_FILE]`. See `[server|service|payout].sample.
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+
+## Wallet Seed:
+Use [mnemonic-phrase](https://github.com/nimiq/mnemonic-phrase) to turn your mnemonic to private key in hex format. Set it to `privateHex`
+
+Turn your private key from hex to Buffer(32)
+```javascript
+privateBuffer = Nimiq.BufferUtils.fromHex(<privatekey>);
+```
+
+Use privateBuffer to get your PublicKey in Buffer(32) format
+```javascript
+publicBuffer = Nimiq.PublicKey._publicKeyDerive(privateBuffer);
+```
+
+Now turn your publicBuffer to hex value
+```javascript
+publicHex = Nimiq.BufferUtils.toHex(publicBuffer)
+```
+
+Finally combine your privateHex and publicHex
+```javascript
+seed = privateHex + publicHex
+```
+
+To test that you got the correct wallet:
+the final address you get should be your user friendly wallet address.
+```javascript
+wallet = Nimiq.Wallet.loadPlain(seed);
+address = wallet._address.toUserFriendlyAddress()
+```

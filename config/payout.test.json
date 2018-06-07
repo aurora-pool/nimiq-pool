@@ -9,7 +9,7 @@
       "seed": "$TEST_WALLET_SEED"
    },
    "pool": {
-      "name": "Aurora Pool",
+      "name": "Aurora Pool Test",
       "address": "$TEST_WALLET_ADDRESS",
       "payoutConfirmations": 10,
       "autoPayOutLimit": 5000000,

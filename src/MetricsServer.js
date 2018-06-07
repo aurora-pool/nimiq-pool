@@ -19,8 +19,23 @@ class MetricsServer {
                 res.writeHead(401, {'WWW-Authenticate': 'Basic realm="Use username metrics and user-defined password to access metrics." charset="UTF-8"'});
                 res.end();
             } else {
-                this._metrics(res);
-                res.end();
+                const clientCounts = this._poolServer.getClientModeCounts();
+
+                var json = JSON.stringify({
+                  name: this._poolServer.name,
+                  poolAddress: this._poolServer._config.address,
+                  averageHashrate: this._poolServer.averageHashrate,
+                  clientCounts: clientCounts,
+                  poolFee: this._poolServer._config.poolFee,
+                  numBlocksMined: this._poolServer.numBlocksMined,
+                  numIpsBanned: this._poolServer.numIpsBanned,
+                  totalShareDifficulty: this._poolServer.totalShareDifficulty,
+                  payoutConfirmations: this._poolServer._config.payoutConfirmations,
+                  autoPayOutLimit: Nimiq.Policy.satoshisToCoins(this._poolServer._config.autoPayOutLimit),
+                });
+
+                res.writeHead(200, {"Content-Type": "application/json"});
+                res.end(json);
             }
         }).listen(port);
 
@@ -34,46 +49,6 @@ class MetricsServer {
     init(poolServer) {
         /** @type {PoolServer} */
         this._poolServer = poolServer;
-    }
-
-    get _desc() {
-        return {
-            name: this._poolServer.name
-        };
-    }
-
-    /**
-     * @param {object} more
-     * @returns {object}
-     * @private
-     */
-    _with(more) {
-        const res = this._desc;
-        Object.assign(res, more);
-        return res;
-    }
-
-    _metrics(res) {
-        const clientCounts = this._poolServer.getClientModeCounts();
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'unregistered'}), clientCounts.unregistered);
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'smart'}), clientCounts.smart);
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'nano'}), clientCounts.nano);
-
-        MetricsServer._metric(res, 'pool_ips_banned', this._desc, this._poolServer.numIpsBanned);
-        MetricsServer._metric(res, 'pool_blocks_mined', this._desc, this._poolServer.numBlocksMined);
-        MetricsServer._metric(res, 'pool_total_share_difficulty', this._desc, this._poolServer.totalShareDifficulty);
-        MetricsServer._metric(res, 'pool_hash_rate', this._desc, this._poolServer.averageHashrate);
-    }
-
-    /**
-     * @param res
-     * @param {string} key
-     * @param {object} attributes
-     * @param {number} value
-     * @private
-     */
-    static _metric(res, key, attributes, value) {
-        res.write(`${key}{${Object.keys(attributes).map((a) => `${a}="${attributes[a]}"`).join(',')}} ${value}\n`);
     }
 }
 

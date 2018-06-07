@@ -3,10 +3,10 @@ if [[ -z "$NODE_ENV" ]]; then
   exit 1
 fi
 
-cd /app
-rm -rf test-full-consensus
-rm -rf main-full-consensus
-wget https://aschen.ovh/nimiq/$NODE_ENV/$NODE_ENV-full-consensus.tar
-tar -xvf $NODE_ENV-full-consensus.tar && rm $NODE_ENV-full-consensus.tar
+# cd /app
+# rm -rf test-full-consensus
+# rm -rf main-full-consensus
+# wget https://aschen.ovh/nimiq/$NODE_ENV/$NODE_ENV-full-consensus.tar
+# tar -xvf $NODE_ENV-full-consensus.tar && rm $NODE_ENV-full-consensus.tar
 
 node index.js --config=$NODE_ENV.json

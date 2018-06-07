@@ -4,6 +4,8 @@ if [[ -z "$NODE_ENV" ]]; then
 fi
 
 cd /app
+rm -rf test-full-consensus
+rm -rf main-full-consensus
 wget https://aschen.ovh/nimiq/$NODE_ENV/$NODE_ENV-full-consensus.tar
 tar -xvf $NODE_ENV-full-consensus.tar && rm $NODE_ENV-full-consensus.tar
 

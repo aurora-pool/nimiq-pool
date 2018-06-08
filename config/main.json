@@ -45,6 +45,6 @@
    "type": "full",
    "network": "main",
    "log": {
-      "level": "info"
+      "level": "verbose"
    }
 }

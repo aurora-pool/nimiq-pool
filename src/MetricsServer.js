@@ -19,12 +19,14 @@ class MetricsServer {
                 res.writeHead(401, {'WWW-Authenticate': 'Basic realm="Use username metrics and user-defined password to access metrics." charset="UTF-8"'});
                 res.end();
             } else {
-                const clientCounts = this._poolServer.getClientModeCounts();
+                var clientCounts = this._poolServer.getClientModeCounts();
+                var totalClientCounts = clientCounts.unregistered + clientCounts.smart + clientCounts.nano
 
                 var json = JSON.stringify({
                   name: this._poolServer.name,
                   poolAddress: this._poolServer._config.address,
                   averageHashrate: this._poolServer.averageHashrate,
+                  totalClientCounts: totalClientCounts,
                   clientCounts: clientCounts,
                   poolFee: this._poolServer._config.poolFee,
                   numBlocksMined: this._poolServer.numBlocksMined,

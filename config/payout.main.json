@@ -22,8 +22,8 @@
       "pplnsShares": 1000,
       "allowedErrors": 3
    },
-   "host": "test.aurorapool.io",
-   "port": 8443,
+   "host": "help.aurorapool.io",
+   "port": 8000,
    "tls": {
       "cert": "$SSL_CERT_PATH",
       "key": "$SSL_KEY_PATH"

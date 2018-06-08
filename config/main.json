@@ -36,7 +36,7 @@
       "pplnsShares": 1000,
       "allowedErrors": 3
    },
-   "host": "aurorapool.io",
+   "host": "us-east.aurorapool.io",
    "port": 8443,
    "tls": {
       "cert": "$SSL_CERT_PATH",
@@ -45,6 +45,6 @@
    "type": "full",
    "network": "main",
    "log": {
-      "level": "verbose"
+      /* "level": "verbose" */
    }
 }

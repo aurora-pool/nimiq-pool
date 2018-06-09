@@ -88,7 +88,8 @@ const DEFAULT_CONFIG = /** @type {Config} */ {
     poolMetricsServer: {
         enabled: false,
         port: 8650,
-        password: null
+        password: null,
+        path: "/metrics"
     },
     wallet: {
         seed: null,
@@ -162,7 +163,8 @@ const CONFIG_TYPES = {
         type: 'object', sub: {
             enabled: 'boolean',
             port: 'number',
-            password: 'string'
+            password: 'string',
+            path: 'string'
         }
     },
     wallet: {

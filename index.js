@@ -89,7 +89,13 @@ for (const seedPeer of config.seedPeers) {
         );
 
         if (config.poolMetricsServer.enabled) {
-            $.metricsServer = new MetricsServer(config.poolServer.sslKeyPath, config.poolServer.sslCertPath, config.poolMetricsServer.port, config.poolMetricsServer.password);
+            $.metricsServer = new MetricsServer(
+                config.poolServer.sslKeyPath,
+                config.poolServer.sslCertPath,
+                config.poolMetricsServer.port,
+                config.poolMetricsServer.password,
+                config.poolMetricsServer.path
+            );
             $.metricsServer.init(poolServer);
         }
 

@@ -8,7 +8,8 @@
    "poolMetricsServer": {
       "enabled": true,
       "port": 8650,
-      "password": null
+      "password": null,
+      "path": "/api/v1/metrics"
    },
    "poolServer": {
       "enabled": true,

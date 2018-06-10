@@ -3,6 +3,7 @@ const https = require('https');
 const WebSocket = require('uws');
 const mysql = require('mysql2/promise');
 const fs = require('fs');
+const redis = require("redis");
 
 const PoolAgent = require('./PoolAgent.js');
 const Helper = require('./Helper.js');
@@ -20,6 +21,9 @@ class PoolServer extends Nimiq.Observable {
      */
     constructor(consensus, config, port, mySqlPsw, mySqlHost, mySqlPort, sslKeyPath, sslCertPath) {
         super();
+
+        // TO DO: Get the options for the client from config
+        this._redisClient = redis.createClient({ host: "redis" });
 
         /** @type {Nimiq.FullConsensus} */
         this._consensus = consensus;

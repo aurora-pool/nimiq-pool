@@ -89,6 +89,8 @@ class PoolServer extends Nimiq.Observable {
 
         setInterval(() => this._calculateHashrate(), PoolServer.HASHRATE_INTERVAL);
 
+        setInterval(() => this._setStats(), PoolServer.STATS_INTERVAL);
+
         this.consensus.on('established', () => this.start());
     }
 
@@ -276,6 +278,30 @@ class PoolServer extends Nimiq.Observable {
         Nimiq.Log.d(PoolServer, `Pool hashrate is ${Math.round(this._averageHashrate)} H/s (1 min average)`);
     }
 
+    _setStats() {
+        const clientCounts = this.getClientModeCounts();
+        const totalClientCounts = clientCounts.unregistered + clientCounts.smart + clientCounts.nano;
+
+        const json = JSON.stringify({
+          name: this.name,
+          poolAddress: this._config.address,
+          averageHashrate: this.averageHashrate,
+          totalClientCounts: totalClientCounts,
+          clientCounts: clientCounts,
+          poolFee: this._config.poolFee,
+          numBlocksMined: this.numBlocksMined,
+          numIpsBanned: this.numIpsBanned,
+          totalShareDifficulty: this.totalShareDifficulty,
+          payoutConfirmations: this._config.payoutConfirmations,
+          autoPayOutLimit: Nimiq.Policy.satoshisToCoins(this._config.autoPayOutLimit)
+        });
+
+        this._redisClient.set(PoolServer.STATS_KEY, json, (err, _) => {
+            if (!err) {
+                Nimiq.Log.e(PoolServer, "ERROR: Cannot set stats");
+            }
+        });
+    }
     /**
      * @param {number} userId
      * @param {number} deviceId
@@ -412,5 +438,7 @@ class PoolServer extends Nimiq.Observable {
 PoolServer.DEFAULT_BAN_TIME = 1000 * 60 * 10; // 10 minutes
 PoolServer.UNBAN_IPS_INTERVAL = 1000 * 60; // 1 minute
 PoolServer.HASHRATE_INTERVAL = 1000 * 60; // 1 minute
+PoolServer.STATS_INTERVAL = 1000 * 60; // 1 minute
+PoolServer.STATS_KEY = "aurora-pool:stats";
 
 module.exports = exports = PoolServer;

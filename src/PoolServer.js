@@ -298,7 +298,7 @@ class PoolServer extends Nimiq.Observable {
 
         this._redisClient.set(PoolServer.STATS_KEY, json, (err, _) => {
             if (!err) {
-                Nimiq.Log.e(PoolServer, "ERROR: Cannot set stats");
+                Nimiq.Log.e(PoolServer, "ERROR: Cannot set stats", err);
             }
         });
     }

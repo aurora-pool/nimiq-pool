@@ -285,13 +285,13 @@ class PoolServer extends Nimiq.Observable {
         const json = JSON.stringify({
           name: this.name,
           poolAddress: this._config.address,
-          averageHashrate: this.averageHashrate,
+          averageHashrate: this._averageHashrate,
           totalClientCounts: totalClientCounts,
           clientCounts: clientCounts,
           poolFee: this._config.poolFee,
-          numBlocksMined: this.numBlocksMined,
-          numIpsBanned: this.numIpsBanned,
-          totalShareDifficulty: this.totalShareDifficulty,
+          numBlocksMined: this._numBlocksMined,
+          numIpsBanned: this._numIpsBanned,
+          totalShareDifficulty: this._totalShareDifficulty,
           payoutConfirmations: this._config.payoutConfirmations,
           autoPayOutLimit: Nimiq.Policy.satoshisToCoins(this._config.autoPayOutLimit)
         });

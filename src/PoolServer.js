@@ -296,10 +296,13 @@ class PoolServer extends Nimiq.Observable {
           autoPayOutLimit: Nimiq.Policy.satoshisToCoins(this._config.autoPayOutLimit)
         });
 
-        this._redisClient.set(PoolServer.STATS_KEY, json, (err, _) => {
-            if (!err) {
+        this._redisClient.set(PoolServer.STATS_KEY, `{ type: "pool:stats", payload: ${json}}`, (err, response) => {
+            if (err) {
                 Nimiq.Log.e(PoolServer, `ERROR: Cannot set stats ${err}`);
             }
+
+            Nimiq.Log.v(PoolServer, 'Pool stats update, nginx: ' + response);
+            Nimiq.Log.v(PoolServer, 'New pool stats : ' + json);
         });
     }
     /**

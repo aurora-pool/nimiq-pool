@@ -158,7 +158,7 @@ class PoolAgent extends Nimiq.Observable {
         this._userId = await this._pool.getStoreUserId(this._address);
         this._regenerateNonce();
         this._regenerateExtraData();
-        this._addMiner(this._address);
+        this._addOrUpdateMiner(this._address);
 
         this._registered = true;
         this._send({
@@ -202,7 +202,9 @@ class PoolAgent extends Nimiq.Observable {
 
         await this._pool.storeShare(this._userId, this._deviceId, block.header.prevHash, block.header.height - 1, this._difficulty, hash);
 
-        Nimiq.Log.v(PoolAgent, () => `SHARE from ${this._address.toUserFriendlyAddress()} (nano), prev ${block.header.prevHash} : ${hash}`);
+        Nimiq.Log.v(PoolAgent, () => `SHARE from ${this._address.toUserFriendlyAddress()} device: ${this._deviceId} (nano), prev ${block.header.prevHash} : ${hash}`);
+
+        this._addOrUpdateMiner(this._address);
 
         this.fire('share', block.header, this._difficulty);
     }
@@ -293,7 +295,9 @@ class PoolAgent extends Nimiq.Observable {
 
         await this._pool.storeShare(this._userId, this._deviceId, header.prevHash, header.height - 1, this._difficulty, hash);
 
-        Nimiq.Log.v(PoolAgent, () => `SHARE from ${this._address.toUserFriendlyAddress()} (smart), prev ${header.prevHash} : ${hash}`);
+        Nimiq.Log.v(PoolAgent, () => `SHARE from ${this._address.toUserFriendlyAddress()} device: ${this._deviceId} (smart), prev ${header.prevHash} : ${hash}`);
+
+        this._addOrUpdateMiner(this._address);
 
         this.fire('share', header, this._difficulty);
     }
@@ -448,6 +452,7 @@ class PoolAgent extends Nimiq.Observable {
     }
 
     _onClose() {
+        this._removeMiner(this._address);
         this._offAll();
 
         this._timers.clearAll();
@@ -459,27 +464,30 @@ class PoolAgent extends Nimiq.Observable {
         this._ws.close();
     }
 
-    _addMiner(address) {
-        this._pool._redisClient.sadd(PoolAgent.ACTIVE_MINERS_REDIS_KEY, address.toUserFriendlyAddress(), (err, response) => {
+    _addOrUpdateMiner(address) {
+        this._pool._redisClient.zadd(PoolAgent.ACTIVE_MINERS_REDIS_KEY, Date.now(), address.toUserFriendlyAddress(), (err, response) => {
             if (err) {
-                Nimiq.Log.e(PoolAgent, `ERROR: Cannot set miners:active ${err}`);
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot add ${address.toUserFriendlyAddress()} to miners:active ${err}`);
             }
         });
 
-        this._setMinersCount()
+        this._setMinersCount();
     }
 
-    // TODO: USE THIS FUNCTION
+    // TODO: we cant assume 1 miner = 1 device.
+    // Make this a conditonal and only remove miner if it does not have any other active devices.
     _removeMiner(address) {
-        this._pool._redisClient.srem(PoolAgent.ACTIVE_MINERS_REDIS_KEY, address.toUserFriendlyAddress(), (err, response) => {
+        this._pool._redisClient.zrem(PoolAgent.ACTIVE_MINERS_REDIS_KEY, address.toUserFriendlyAddress(), (err, response) => {
             if (err) {
                 Nimiq.Log.e(PoolAgent, `ERROR: Cannot remove ${address.toUserFriendlyAddress()} from miners:active ${err}`);
             }
         });
+
+        this._setMinersCount();
     }
 
     _setMinersCount() {
-        this._pool._redisClient.scard(PoolAgent.ACTIVE_MINERS_REDIS_KEY, (err, response) => {
+        this._pool._redisClient.zcard(PoolAgent.ACTIVE_MINERS_REDIS_KEY, (err, response) => {
             if (err) {
                 Nimiq.Log.e(PoolAgent, `ERROR: Cannot get miners:active ${err}`);
             }

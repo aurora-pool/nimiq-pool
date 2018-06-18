@@ -115,6 +115,8 @@ class PoolServer extends Nimiq.Observable {
         this._wss = PoolServer.createServer(this.port, this._sslKeyPath, this._sslCertPath);
         this._wss.on('connection', (ws, req) => this._onConnection(ws, req));
 
+        this._numBlocksMined = await Helper.getTotalBlocksMined(this.connectionPool);
+
         this.consensus.blockchain.on('head-changed', (head) => this._announceHeadToNano(head));
     }
 

@@ -158,6 +158,7 @@ class PoolAgent extends Nimiq.Observable {
         this._userId = await this._pool.getStoreUserId(this._address);
         this._regenerateNonce();
         this._regenerateExtraData();
+        this._addMiner(this._address);
 
         this._registered = true;
         this._send({
@@ -457,6 +458,36 @@ class PoolAgent extends Nimiq.Observable {
         this._pool.removeAgent(this);
         this._ws.close();
     }
+
+    _addMiner(address) {
+        this._pool._redisClient.sadd(PoolAgent.ACTIVE_MINERS_REDIS_KEY, address.toUserFriendlyAddress(), (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot set miners:active ${err}`);
+            }
+        });
+
+        this._setMinersCount()
+    }
+
+    // TODO: USE THIS FUNCTION
+    _removeMiner(address) {
+        this._pool._redisClient.srem(PoolAgent.ACTIVE_MINERS_REDIS_KEY, address.toUserFriendlyAddress(), (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot remove ${address.toUserFriendlyAddress()} from miners:active ${err}`);
+            }
+        });
+    }
+
+    _setMinersCount() {
+        this._pool._redisClient.scard(PoolAgent.ACTIVE_MINERS_REDIS_KEY, (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot get miners:active ${err}`);
+            }
+
+            this._pool._minersCount = response;
+        });
+    }
+
 }
 PoolAgent.MESSAGE_REGISTER = 'register';
 PoolAgent.MESSAGE_REGISTERED = 'registered';
@@ -469,6 +500,9 @@ PoolAgent.MESSAGE_ERROR = 'error';
 
 PoolAgent.MODE_NANO = 'nano';
 PoolAgent.MODE_SMART = 'smart';
+
+// Redis keys
+PoolAgent.ACTIVE_MINERS_REDIS_KEY = 'miners:active';
 
 /** @enum {number} */
 PoolAgent.Mode = {

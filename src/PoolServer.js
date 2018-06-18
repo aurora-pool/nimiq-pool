@@ -82,6 +82,9 @@ class PoolServer extends Nimiq.Observable {
         /** @type {number} */
         this._averageHashrate = 0;
 
+        /** @type {number} */
+        this._minersCount = 0;
+
         /** @type {boolean} */
         this._started = false;
 
@@ -288,6 +291,7 @@ class PoolServer extends Nimiq.Observable {
           averageHashrate: this.averageHashrate,
           totalClientCounts: totalClientCounts,
           clientCounts: clientCounts,
+          minersCount: this._minersCount,
           poolFee: this._config.poolFee,
           numBlocksMined: this.numBlocksMined,
           numIpsBanned: this.numIpsBanned,
@@ -296,12 +300,11 @@ class PoolServer extends Nimiq.Observable {
           autoPayOutLimit: Nimiq.Policy.satoshisToCoins(this._config.autoPayOutLimit)
         });
 
-        this._redisClient.set(PoolServer.STATS_KEY, `{"type":"pool:stats","payload":${json}}`, (err, response) => {
+        this._redisClient.set(PoolServer.STATS_REDIS_KEY, `{"type":"pool:stats","payload":${json}}`, (err, response) => {
             if (err) {
                 Nimiq.Log.e(PoolServer, `ERROR: Cannot set stats ${err}`);
             }
 
-            Nimiq.Log.v(PoolServer, 'Pool stats update, nginx: ' + response);
             Nimiq.Log.v(PoolServer, 'New pool stats : ' + json);
         });
     }
@@ -442,6 +445,6 @@ PoolServer.DEFAULT_BAN_TIME = 1000 * 60 * 10; // 10 minutes
 PoolServer.UNBAN_IPS_INTERVAL = 1000 * 60; // 1 minute
 PoolServer.HASHRATE_INTERVAL = 1000 * 60; // 1 minute
 PoolServer.STATS_INTERVAL = 1000 * 60; // 1 minute
-PoolServer.STATS_KEY = "aurora-pool:stats";
+PoolServer.STATS_REDIS_KEY = "aurora-pool:stats";
 
 module.exports = exports = PoolServer;

@@ -529,6 +529,8 @@ class PoolAgent extends Nimiq.Observable {
     _removeDevice() {
         this._pool._redisClient.srem(`miner:${this._address.toUserFriendlyAddress()}`, this._deviceId);
 
+        this._pool._redisClient.del(`device:${this._deviceId}`);
+
         this._pool._redisClient.scard(`miner:${this._address.toUserFriendlyAddress()}`, (err, response) => {
             if (err) {
                 Nimiq.Log.e(PoolAgent, `ERROR: Cannot get miner:${this._address.toUserFriendlyAddress()} ${err}`);
@@ -537,29 +539,34 @@ class PoolAgent extends Nimiq.Observable {
             if (response == 0) {
                 this._removeMiner();
             }
-      });
+        });
     }
 
     _addOrUpdateDevice() {
-        this._pool._redisClient.lpush(`device:${this._deviceId}`, this._deviceLabel, this._currentDeviceHashrate, Date.now(), (err, response) => {
+        this._pool._redisClient.hmset(`device:${this._deviceId}`,
+           'deviceLabel', this._deviceLabel,
+           'currentDeviceHashrate', this._currentDeviceHashrate,
+           'deviceLastSeen', Date.now(), (err, response) => {
             if (err) {
-                Nimiq.Log.e(PoolAgent, `ERROR: Cannot lpush to ${this._deviceId} ${err}`);
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot hmset to device:${this._deviceId} ${err}`);
             }
         });
     }
 
     _updateDeviceHashrate() {
-        this._pool._redisClient.lset(`device:${this._deviceId}`, 1, this._currentDeviceHashrate, (err, response) => {
+        this._pool._redisClient.hset(`device:${this._deviceId}`,
+            'currentDeviceHashrate', this._currentDeviceHashrate, (err, response) => {
             if (err) {
-                Nimiq.Log.e(PoolAgent, `ERROR: Cannot lset _currentDeviceHashrate for ${this._deviceId} ${err}`);
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot hset _currentDeviceHashrate for device:${this._deviceId} ${err}`);
             }
         });
     }
 
     _updateDeviceLastSeen() {
-        this._pool._redisClient.lset(`device:${this._deviceId}`, 0, Date.now(), (err, response) => {
+        this._pool._redisClient.hset(`device:${this._deviceId}`,
+          'deviceLastSeen', Date.now(), (err, response) => {
             if (err) {
-                Nimiq.Log.e(PoolAgent, `ERROR: Cannot lset Date.now() for ${this._deviceId} ${err}`);
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot hset Date.now() for device:${this._deviceId} ${err}`);
             }
         });
     }

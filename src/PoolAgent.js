@@ -34,6 +34,12 @@ class PoolAgent extends Nimiq.Observable {
         /** @type {boolean} */
         this._registered = false;
 
+        /** @type {number} */
+        this._currentDeviceHashrate = 0;
+
+        /** @type {string} */
+        this._deviceLabel = "";
+
         /** @type {Nimiq.Timers} */
         this._timers = new Nimiq.Timers();
         this._timers.resetTimeout('connection-timeout', () => this._onError(), this._pool.config.connectionTimeout);
@@ -116,11 +122,24 @@ class PoolAgent extends Nimiq.Observable {
                 this._timers.resetTimeout('connection-timeout', () => this._onError(), this._pool.config.connectionTimeout);
                 break;
             }
+            case PoolAgent.MESSAGE_HASHRATE_CHANGE: {
+                this._onHashrateChanged(msg);
+                break;
+            }
             case PoolAgent.MESSAGE_PAYOUT: {
                 await this._onPayoutMessage(msg);
                 break;
             }
         }
+    }
+
+    _onHashrateChanged(msg) {
+      if (msg.deviceId == this._deviceId) {
+          this._currentDeviceHashrate = msg.hashrate;
+          this._updateDeviceHashrate();
+      } else {
+          this._sendError(`Cant update hashrate for device ${this._deviceId}`);
+      }
     }
 
     /**
@@ -135,6 +154,8 @@ class PoolAgent extends Nimiq.Observable {
 
         this._address = Nimiq.Address.fromUserFriendlyAddress(msg.address);
         this._deviceId = msg.deviceId;
+        this._deviceLabel = msg.deviceLabel;
+
         switch (msg.mode) {
             case PoolAgent.MODE_SMART:
                 this.mode = PoolAgent.Mode.SMART;
@@ -158,7 +179,8 @@ class PoolAgent extends Nimiq.Observable {
         this._userId = await this._pool.getStoreUserId(this._address);
         this._regenerateNonce();
         this._regenerateExtraData();
-        this._addOrUpdateMiner(this._address);
+        this._addOrUpdateMiner();
+        this._addOrUpdateDevice();
 
         this._registered = true;
         this._send({
@@ -204,7 +226,9 @@ class PoolAgent extends Nimiq.Observable {
 
         Nimiq.Log.v(PoolAgent, () => `SHARE from ${this._address.toUserFriendlyAddress()} device: ${this._deviceId} (nano), prev ${block.header.prevHash} : ${hash}`);
 
-        this._addOrUpdateMiner(this._address);
+        this._addOrUpdateMiner();
+
+        this._updateDeviceLastSeen();
 
         this.fire('share', block.header, this._difficulty);
     }
@@ -297,7 +321,9 @@ class PoolAgent extends Nimiq.Observable {
 
         Nimiq.Log.v(PoolAgent, () => `SHARE from ${this._address.toUserFriendlyAddress()} device: ${this._deviceId} (smart), prev ${header.prevHash} : ${hash}`);
 
-        this._addOrUpdateMiner(this._address);
+        this._addOrUpdateMiner();
+
+        this._updateDeviceLastSeen();
 
         this.fire('share', header, this._difficulty);
     }
@@ -452,7 +478,7 @@ class PoolAgent extends Nimiq.Observable {
     }
 
     _onClose() {
-        this._removeMiner(this._address);
+        this._removeDevice();
         this._offAll();
 
         this._timers.clearAll();
@@ -464,22 +490,26 @@ class PoolAgent extends Nimiq.Observable {
         this._ws.close();
     }
 
-    _addOrUpdateMiner(address) {
-        this._pool._redisClient.zadd(PoolAgent.ACTIVE_MINERS_REDIS_KEY, Date.now(), address.toUserFriendlyAddress(), (err, response) => {
+    _addOrUpdateMiner() {
+        this._pool._redisClient.zadd(PoolAgent.ACTIVE_MINERS_REDIS_KEY, Date.now(), this._address.toUserFriendlyAddress(), (err, response) => {
             if (err) {
-                Nimiq.Log.e(PoolAgent, `ERROR: Cannot add ${address.toUserFriendlyAddress()} to miners:active ${err}`);
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot add ${this._address.toUserFriendlyAddress()} to miners:active ${err}`);
+            }
+        });
+
+        this._pool._redisClient.sadd(`miner:${this._address.toUserFriendlyAddress()}`, this._deviceId, (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot add ${this._deviceId} to miner:${this._address.toUserFriendlyAddress()} ${err}`);
             }
         });
 
         this._setMinersCount();
     }
 
-    // TODO: we cant assume 1 miner = 1 device.
-    // Make this a conditonal and only remove miner if it does not have any other active devices.
-    _removeMiner(address) {
-        this._pool._redisClient.zrem(PoolAgent.ACTIVE_MINERS_REDIS_KEY, address.toUserFriendlyAddress(), (err, response) => {
+    _removeMiner() {
+        this._pool._redisClient.zrem(PoolAgent.ACTIVE_MINERS_REDIS_KEY, this._address.toUserFriendlyAddress(), (err, response) => {
             if (err) {
-                Nimiq.Log.e(PoolAgent, `ERROR: Cannot remove ${address.toUserFriendlyAddress()} from miners:active ${err}`);
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot remove ${this._address.toUserFriendlyAddress()} from miners:active ${err}`);
             }
         });
 
@@ -496,6 +526,44 @@ class PoolAgent extends Nimiq.Observable {
         });
     }
 
+    _removeDevice() {
+        this._pool._redisClient.srem(`miner:${this._address.toUserFriendlyAddress()}`, this._deviceId);
+
+        this._pool._redisClient.scard(`miner:${this._address.toUserFriendlyAddress()}`, (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot get miner:${this._address.toUserFriendlyAddress()} ${err}`);
+            }
+
+            if (response == 0) {
+                this._removeMiner();
+            }
+      });
+    }
+
+    _addOrUpdateDevice() {
+        this._pool._redisClient.lpush(`device:${this._deviceId}`, this._deviceLabel, this._currentDeviceHashrate, Date.now(), (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot lpush to ${this._deviceId} ${err}`);
+            }
+        });
+    }
+
+    _updateDeviceHashrate() {
+        this._pool._redisClient.lset(`device:${this._deviceId}`, 1, this._currentDeviceHashrate, (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot lset _currentDeviceHashrate for ${this._deviceId} ${err}`);
+            }
+        });
+    }
+
+    _updateDeviceLastSeen() {
+        this._pool._redisClient.lset(`device:${this._deviceId}`, 0, Date.now(), (err, response) => {
+            if (err) {
+                Nimiq.Log.e(PoolAgent, `ERROR: Cannot lset Date.now() for ${this._deviceId} ${err}`);
+            }
+        });
+    }
+
 }
 PoolAgent.MESSAGE_REGISTER = 'register';
 PoolAgent.MESSAGE_REGISTERED = 'registered';
@@ -505,7 +573,7 @@ PoolAgent.MESSAGE_SETTINGS = 'settings';
 PoolAgent.MESSAGE_BALANCE = 'balance';
 PoolAgent.MESSAGE_NEW_BLOCK = 'new-block';
 PoolAgent.MESSAGE_ERROR = 'error';
-
+PoolAgent.MESSAGE_HASHRATE_CHANGE = 'hashrate-changed';
 PoolAgent.MODE_NANO = 'nano';
 PoolAgent.MODE_SMART = 'smart';
 
